@@ -12,7 +12,6 @@ route:
     - matchers:
         - severity = "critical"
       receiver: 'slack-critical'
-      continue: true
     - matchers:
         - severity = "warning"
       receiver: 'slack-default'
@@ -23,9 +22,11 @@ receivers:
       - api_url: '{{ env "SLACK_WEBHOOK_URL" }}'
         channel: '#observability'
         send_resolved: true
-        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} {{ .GroupLabels.alertname }}'
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '{{ if eq .Status "firing" }}FIRING{{ else }}RESOLVED{{ end }}: {{ .GroupLabels.alertname }}'
         text: |
           {{ range .Alerts }}
+          *{{ if eq $.Status "firing" }}Severity: WARNING{{ else }}Severity: CLEARED{{ end }}*
           *{{ .Annotations.summary }}*
           {{ .Annotations.description }}
           *Runbook:* {{ .Annotations.runbook_url }}
@@ -36,9 +37,11 @@ receivers:
       - api_url: '{{ env "SLACK_WEBHOOK_URL" }}'
         channel: '#oncall'
         send_resolved: true
-        title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '{{ if eq .Status "firing" }}FIRING{{ else }}RESOLVED{{ end }}: {{ .GroupLabels.alertname }}'
         text: |
           {{ range .Alerts }}
+          *{{ if eq $.Status "firing" }}Severity: CRITICAL{{ else }}Severity: CLEARED{{ end }}*
           *{{ .Annotations.summary }}*
           {{ .Annotations.description }}
           *Runbook:* {{ .Annotations.runbook_url }}
